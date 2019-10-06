@@ -1,0 +1,132 @@
+"""
+class EmptyInputException(Exception):
+    pass
+
+
+class InvalidInputException(Exception):
+    pass
+
+
+@app.errorhandler(EmptyInputException)
+def empty_input_exception(e):
+    return jsonify("Error", "Input cannot be empty"), 400
+
+
+@app.errorhandler(InvalidInputException)
+def invalid_input_exception(e):
+    return jsonify("Error", "Invalid Input"), 400
+
+
+@app.errorhandler(Exception)
+def exception_raise(error):
+    return make_response(jsonify('error', str(error)), error.code)
+"""
+"""
+POSTGRES_URL = "127.0.0.1:5432"
+POSTGRES_USER = "postgres"
+POSTGRES_PW = "hello"
+POSTGRES_DB = "finalbase"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{user}:{pw}@{url}/{db}'.format(user=POSTGRES_USER, pw=POSTGRES_PW,
+                                                                                     url=POSTGRES_URL, db=POSTGRES_DB)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+subscription_table = db.Table('subscription_table',
+                              db.Column('user_id', db.Integer, db.ForeignKey('people.user_id'), primary_key=True),
+                              db.Column('article_id', db.Integer, db.ForeignKey('article.article_id'), primary_key=True)
+                              )
+
+
+class People(db.Model):
+    __tablename__ = 'people'
+    user_id = db.Column(db.Integer, primary_key=True)
+    user_name = db.Column(db.String(20), unique=True, nullable=False)
+    subsriptions = db.relationship('Article', secondary=subscription_table, backref='subscibers')
+
+    def __init__(self, name):
+        self.user_name = name
+
+
+class Article(db.Model):
+    __tablename__ = 'article'
+    article_id = db.Column(db.Integer, primary_key=True)
+    topic = db.Column(db.String(10), nullable=False)
+    content = db.Column(db.String(100), nullable=False)
+
+    def __init__(self, topic, content):
+        self.topic = topic
+        self.content = content
+
+
+db.create_all()
+db.session.commit()
+
+
+def add_article():
+    for loop in range(10):
+        db.session.add(Article(topic='topic' + str(loop + 1), content='content' + str(loop + 1)))
+"""
+"""
+def is_valid_name(name):
+    return re.fullmatch("[a-zA-Z ]+", name)
+
+@app.route('/article/subscribe/<int:user_id>', methods=['POST'])
+def user_subscribe_article(user_id):
+    print("hu")
+    user=People.query.filter_by(user_id=user_id).first()
+    if not user:
+        raise NotFound("user not found")
+    if 'article_id' not in request.json:
+      raise BadRequest("Missing article_id attribute")
+    article_id = request.json['article_id']
+    if type(article_id) != int:
+        raise BadRequest("Invalid article id")
+    else:
+        article = Article.query.filter_by(article_id=article_id).first()
+        if not article:
+            raise NotFound("Article not present")
+        article.subscibers.append(user)
+        db.session.commit()
+        return jsonify({"user_id": user.user_id, "article_id": article.article_id}), 200
+"""
+"""
+@app.route('/user/add', methods=['POST'])
+def add_users():
+    if  'name' not in request.json:
+        raise BadRequest("Missing name attribute ")#validator
+    else:
+        name = request.json['name']
+        if not name:
+            raise BadRequest("Name cannot be empty")#validator
+        if type(name)!=str:
+            raise BadRequest("Invalid name : not str")
+       # if not is_valid_name(name):
+        #    raise NotFound("Invalid name")
+        print(33)
+        user = People(name=name)
+        db.session.add(user)
+        db.session.commit()
+        return jsonify( {"user_id": user.user_id, "user_name": name}), 201
+
+#done
+@app.route('/user/add/<name>',methods=['POST'])
+def add_user(name):
+    if not name:
+        raise BadRequest("Name cannot be empty")
+    if type(name) != str:
+        raise BadRequest("Invalid name")
+    if not is_valid_name(name):
+        raise BadRequest("Invalid name")
+    user = People(name=name)
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({"user_id": user.user_id, "user_name": name}), 201
+"""
+"""
+@app.route('/register', methods = [ 'POST' ] )
+@app.validate( 'users', 'register' )
+def routeRegister():
+  user = request.json
+  return jsonify(user)
+"""
